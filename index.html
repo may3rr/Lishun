@@ -533,6 +533,25 @@
       opacity: 0.8;
     }
 
+    .sub-link {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .sub-link a {
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 29, 31, 0.18);
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .sub-link a:hover {
+      color: #555;
+      border-bottom-color: #555;
+    }
+
     .config-btn {
       display: inline-flex;
       align-items: center;
@@ -1032,7 +1051,7 @@
       <div class="field">
         <label class="field-label">API 地址</label>
         <input class="field-input" id="cfgApiUrl" type="text" placeholder="https://api.deepseek.com/chat/completions" oninput="autoSaveConfig()">
-        <p class="field-hint">兼容 OpenAI Chat Completions 的端点。默认值与抠字儿一致。</p>
+        <p class="field-hint">兼容 OpenAI Chat Completions 的端点。</p>
       </div>
 
       <div class="field">
@@ -1078,6 +1097,7 @@
           </a>
         </div>
         <p class="subtitle">粘贴正文与参考文献，按正文出现顺序重排引用编号</p>
+        <p class="sub-link">再找论文错别字检测？<a href="https://jackielyu.is-a.dev/Kouzer/" target="_blank" rel="noopener noreferrer">试试抠字儿</a></p>
       </header>
 
       <button class="config-btn" onclick="openSidebar()">
