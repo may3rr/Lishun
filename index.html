@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>理顺</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    :root {
+      --bg: #F5F5F7;
+      --surface: #FFFFFF;
+      --text: #1D1D1F;
+      --text-secondary: #86868B;
+      --text-tertiary: #AEAEB2;
+      --border: #D2D2D7;
+      --border-light: #E8E8ED;
+      --accent: #0071E3;
+      --accent-soft: rgba(0, 113, 227, 0.08);
+      --warn-bg: #FFF7E6;
+      --warn-text: #9A6700;
+      --warn-border: #EAC54F;
+      --diff-del-bg: #FFEEF0;
+      --diff-del-text: #B31D28;
+      --diff-del-border: #FDAEB7;
+      --diff-ins-bg: #E6FFEC;
+      --diff-ins-text: #22863A;
+      --diff-ins-border: #ABF2BC;
+      --diff-changed-bg: #FFFBDD;
+      --diff-changed-border: #E8C547;
+      --sidebar-w: 380px;
+      --serif-en: 'Cormorant Garamond', 'Times New Roman', Georgia, serif;
+      --serif-cn: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: var(--serif-cn);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.8;
+      overflow-x: hidden;
+    }
+
+    body.onboarding-open {
+      overflow: hidden;
+    }
+
+    .onboarding-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 220;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.82), rgba(245, 245, 247, 0.92) 42%, rgba(232, 232, 237, 0.96) 100%),
+        rgba(245, 245, 247, 0.92);
+      backdrop-filter: blur(14px);
+    }
+
+    .onboarding-overlay.hidden {
+      display: none;
+    }
+
+    .onboarding-card {
+      width: min(560px, 100%);
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(210, 210, 215, 0.9);
+      border-radius: 24px;
+      box-shadow: 0 26px 80px rgba(29, 29, 31, 0.14);
+      overflow: hidden;
+    }
+
+    .onboarding-head {
+      padding: 28px 32px 18px;
+      border-bottom: 1px solid var(--border-light);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 245, 247, 0.82) 100%);
+    }
+
+    .onboarding-step,
+    .onboarding-note,
+    .onboarding-btn {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .onboarding-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    .onboarding-body {
+      padding: 30px 32px 32px;
+    }
+
+    .onboarding-copy {
+      overflow: hidden;
+      transition: height 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .onboarding-copy.switching .onboarding-step,
+    .onboarding-copy.switching .onboarding-message,
+    .onboarding-copy.switching .onboarding-note {
+      opacity: 0.42;
+      transform: translateY(8px);
+    }
+
+    .onboarding-step {
+      font-size: 12px;
+      color: var(--text-secondary);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+
+    .onboarding-message {
+      font-size: 24px;
+      line-height: 1.7;
+      letter-spacing: 0.02em;
+      margin-bottom: 16px;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+
+    .onboarding-note {
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 18px;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+
+    .onboarding-note.hidden {
+      display: none;
+    }
+
+    .onboarding-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .onboarding-progress {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .onboarding-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .onboarding-dot.active {
+      background: var(--text);
+      transform: scale(1.18);
+    }
+
+    .onboarding-btn {
+      min-width: 152px;
+      padding: 13px 22px;
+      border: none;
+      border-radius: 999px;
+      background: var(--text);
+      color: var(--surface);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .onboarding-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      z-index: 90;
+      backdrop-filter: blur(2px);
+    }
+
+    .sidebar-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: var(--sidebar-w);
+      max-width: 92vw;
+      height: 100vh;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      z-index: 100;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-header {
+      padding: 32px 28px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .sidebar-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .sidebar-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .sidebar-close:hover {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .sidebar-body {
+      padding: 28px;
+      flex: 1;
+    }
+
+    .field {
+      margin-bottom: 24px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .field-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+    }
+
+    .field-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .field-hint,
+    .auto-save-hint,
+    .disclaimer,
+    .subtitle,
+    .error-msg,
+    .progress-label,
+    .progress-detail,
+    .pane-meta,
+    .summary-row,
+    .empty-state,
+    .log-item,
+    .btn-outline,
+    .btn-primary,
+    .config-btn,
+    .badge,
+    .copy-flash {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .field-hint {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .field-hint a,
+    .copy-flash a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .field-hint a:hover,
+    .copy-flash a:hover {
+      text-decoration: underline;
+    }
+
+    .auto-save-hint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-bottom: 24px;
+    }
+
+    .auto-save-hint svg {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 4px 0 24px;
+    }
+
+    .help-section {
+      margin-bottom: 24px;
+    }
+
+    .help-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .help-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .btn-help {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      font-size: 12px;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .btn-help:hover {
+      border-color: var(--border);
+      background: var(--surface);
+    }
+
+    .btn-help svg {
+      width: 13px;
+      height: 13px;
+      opacity: 0.45;
+    }
+
+    .copy-flash {
+      font-size: 11.5px;
+      color: var(--diff-ins-text);
+      margin-top: 8px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .copy-flash.show {
+      opacity: 1;
+    }
+
+    .sidebar-footer {
+      padding: 20px 28px 32px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .disclaimer {
+      font-size: 11px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .disclaimer strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 72px 28px 140px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .title-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .star-hint {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin: 24px 0 4px;
+      font-size: 0.78rem;
+      color: #1D1D1F;
+      letter-spacing: 0.02em;
+    }
+
+    .star-hint-line {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .star-hint svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      stroke: #1D1D1F;
+    }
+
+    .star-hint a {
+      color: #1D1D1F;
+      text-decoration: none;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .star-hint a:hover {
+      color: #555;
+      border-bottom-color: #555;
+    }
+
+    .github-link {
+      color: var(--text);
+      opacity: 0.45;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: transparent;
+    }
+
+    .github-link:hover {
+      opacity: 0.8;
+      background: rgba(0, 0, 0, 0.05);
+      transform: scale(1.05);
+    }
+
+    .github-link svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    header h1 {
+      font-family: var(--serif-cn);
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      background: linear-gradient(135deg, #1D1D1F 0%, #434347 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 2px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+      opacity: 0.8;
+    }
+
+    .config-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      flex-shrink: 0;
+    }
+
+    .config-btn:hover {
+      border-color: var(--text-secondary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    .config-btn svg {
+      width: 15px;
+      height: 15px;
+      opacity: 0.45;
+    }
+
+    .card {
+      margin-bottom: 36px;
+    }
+
+    .pane-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+      gap: 18px;
+    }
+
+    .pane {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .pane-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(245, 245, 247, 0.76) 100%);
+    }
+
+    .pane-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .pane-meta {
+      color: var(--text-secondary);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 420px;
+      background: var(--surface);
+      border: none;
+      padding: 28px 30px;
+      font-family: var(--serif-cn);
+      font-size: 15px;
+      line-height: 2;
+      color: var(--text);
+      resize: vertical;
+      outline: none;
+    }
+
+    textarea::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    textarea:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 180px;
+      padding: 14px 24px;
+      background: var(--text);
+      color: var(--surface);
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.88;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.18;
+      cursor: not-allowed;
+    }
+
+    .btn-outline {
+      padding: 8px 16px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--text-secondary);
+      background: #FBFBFC;
+    }
+
+    .error-msg {
+      color: var(--diff-del-text);
+      font-size: 13px;
+      display: none;
+    }
+
+    .progress-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .progress-label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .progress-pct {
+      font-size: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: #111111;
+    }
+
+    .progress-track {
+      height: 4px;
+      background: var(--border-light);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-detail {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 12px;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .result-header h2 {
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .summary-row {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .preview-body,
+    .preview-side,
+    .activity-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .preview-inner {
+      padding: 26px 28px;
+      font-size: 15px;
+      line-height: 2;
+    }
+
+    .preview-line {
+      margin-bottom: 18px;
+      word-break: break-word;
+    }
+
+    .preview-line:last-child,
+    .ref-item:last-child,
+    .log-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .line-changed {
+      position: relative;
+      padding: 12px 16px;
+      margin-left: -16px;
+      margin-right: -16px;
+      background: var(--diff-changed-bg);
+      border-left: 3px solid var(--diff-changed-border);
+      border-radius: 0 8px 8px 0;
+    }
+
+    .diff-del {
+      background: var(--diff-del-bg);
+      color: var(--diff-del-text);
+      text-decoration: line-through;
+      text-decoration-color: rgba(179, 29, 40, 0.4);
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid var(--diff-del-border);
+    }
+
+    .diff-ins {
+      background: var(--diff-ins-bg);
+      color: var(--diff-ins-text);
+      font-weight: 500;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid var(--diff-ins-border);
+    }
+
+    .empty-state {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .ref-list,
+    .activity-list {
+      padding: 22px 24px;
+    }
+
+    .ref-item {
+      margin-bottom: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .ref-item.unused {
+      opacity: 0.62;
+    }
+
+    .ref-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .ref-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .ref-text {
+      font-size: 14px;
+      line-height: 1.85;
+      word-break: break-word;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      line-height: 1.5;
+      border: 1px solid var(--border-light);
+      color: var(--text-secondary);
+      background: #FAFAFB;
+    }
+
+    .badge.warn {
+      color: var(--warn-text);
+      background: var(--warn-bg);
+      border-color: rgba(234, 197, 79, 0.5);
+    }
+
+    .log-item {
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .log-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .log-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .status-note {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px solid rgba(234, 197, 79, 0.55);
+      border-radius: 8px;
+      background: var(--warn-bg);
+      color: var(--warn-text);
+      font-size: 12px;
+      line-height: 1.7;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    @media (max-width: 980px) {
+      .pane-grid,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      textarea {
+        min-height: 320px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .main {
+        padding: 48px 18px 96px;
+      }
+
+      .onboarding-overlay {
+        padding: 18px;
+      }
+
+      .onboarding-head {
+        padding: 24px 22px 16px;
+      }
+
+      .onboarding-body {
+        padding: 24px 22px 24px;
+      }
+
+      .onboarding-title {
+        font-size: 24px;
+      }
+
+      .onboarding-message {
+        font-size: 20px;
+      }
+
+      .onboarding-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .onboarding-progress {
+        justify-content: center;
+      }
+
+      .onboarding-btn {
+        width: 100%;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .pane-head,
+      .preview-inner,
+      .ref-list,
+      .activity-list {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      textarea {
+        min-height: 260px;
+        padding: 22px 18px;
+      }
+
+      .line-changed {
+        margin-left: -10px;
+        margin-right: -10px;
+        padding: 10px 12px;
+      }
+
+      .result-actions,
+      .controls {
+        width: 100%;
+      }
+
+      .btn-primary,
+      .btn-outline {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="onboarding-overlay" id="onboardingOverlay">
+    <div class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle" aria-describedby="onboardingMessage">
+      <div class="onboarding-head">
+        <h2 class="onboarding-title" id="onboardingTitle">开始之前</h2>
+      </div>
+      <div class="onboarding-body">
+        <div class="onboarding-copy" id="onboardingCopy">
+          <div class="onboarding-step" id="onboardingStep">第 1 步，共 3 步</div>
+          <p class="onboarding-message" id="onboardingMessage">AI 会出错。结果仅供参考。</p>
+          <p class="onboarding-note hidden" id="onboardingNote"></p>
+        </div>
+        <div class="onboarding-actions">
+          <div class="onboarding-progress" id="onboardingProgress" aria-hidden="true">
+            <span class="onboarding-dot active"></span>
+            <span class="onboarding-dot"></span>
+            <span class="onboarding-dot"></span>
+          </div>
+          <button class="onboarding-btn" id="onboardingBtn" type="button" onclick="advanceOnboarding()">我知道了</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">模型配置</span>
+      <button class="sidebar-close" onclick="closeSidebar()">&times;</button>
+    </div>
+
+    <div class="sidebar-body">
+      <div class="auto-save-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+        填写即生效，无需手动保存
+      </div>
+
+      <div class="field">
+        <label class="field-label">API 地址</label>
+        <input class="field-input" id="cfgApiUrl" type="text" placeholder="https://api.deepseek.com/chat/completions" oninput="autoSaveConfig()">
+        <p class="field-hint">兼容 OpenAI Chat Completions 的端点。默认值与抠字儿一致。</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label">模型名称</label>
+        <input class="field-input" id="cfgModel" type="text" placeholder="deepseek-chat" oninput="autoSaveConfig()">
+      </div>
+
+      <div class="field">
+        <label class="field-label">API Key</label>
+        <input class="field-input" id="cfgApiKey" type="password" placeholder="sk-xxxxxxxxxxxxxxxx" oninput="autoSaveConfig()">
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="help-section">
+        <p class="help-title">不知道如何获取 API Key？</p>
+        <p class="help-desc">点击按钮复制一份操作指引，然后粘贴到 DeepSeek 网页版提问即可获得手把手教程。</p>
+        <button class="btn-help" type="button" onclick="copyConfigHint()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6"/><path d="M12 9v6"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          复制操作指引
+        </button>
+        <p class="copy-flash" id="copyFlash">已复制，前往 <a href="https://chat.deepseek.com/" target="_blank" rel="noopener">DeepSeek</a> 粘贴提问</p>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <p class="disclaimer">
+        <strong>免责声明</strong><br>
+        这是一个纯静态 HTML 工具。你的正文与参考文献只会在处理时发送到你配置的模型接口。引用匹配结果依赖模型判断，低置信度结果需要你自行复核。
+      </p>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <header>
+        <div class="title-wrapper">
+          <h1>理顺</h1>
+          <a href="https://github.com/may3rr/Lishun" target="_blank" rel="noopener noreferrer" class="github-link" title="前往 GitHub Repo">
+            <svg viewBox="0 -0.5 25 25" fill="currentColor">
+              <path d="m12.301 0h.093c2.242 0 4.34.613 6.137 1.68l-.055-.031c1.871 1.094 3.386 2.609 4.449 4.422l.031.058c1.04 1.769 1.654 3.896 1.654 6.166 0 5.406-3.483 10-8.327 11.658l-.087.026c-.063.02-.135.031-.209.031-.162 0-.312-.054-.433-.144l.002.001c-.128-.115-.208-.281-.208-.466 0-.005 0-.01 0-.014v.001q0-.048.008-1.226t.008-2.154c.007-.075.011-.161.011-.249 0-.792-.323-1.508-.844-2.025.618-.061 1.176-.163 1.718-.305l-.076.017c.573-.16 1.073-.373 1.537-.642l-.031.017c.508-.28.938-.636 1.292-1.058l.006-.007c.372-.476.663-1.036.84-1.645l.009-.035c.209-.683.329-1.468.329-2.281 0-.045 0-.091-.001-.136v.007c0-.022.001-.047.001-.072 0-1.248-.482-2.383-1.269-3.23l.003.003c.168-.44.265-.948.265-1.479 0-.649-.145-1.263-.404-1.814l.011.026c-.115-.022-.246-.035-.381-.035-.334 0-.649.078-.929.216l.012-.005c-.568.21-1.054.448-1.512.726l.038-.022-.609.384c-.922-.264-1.981-.416-3.075-.416s-2.153.152-3.157.436l.081-.02q-.256-.176-.681-.433c-.373-.214-.814-.421-1.272-.595l-.066-.022c-.293-.154-.64-.244-1.009-.244-.124 0-.246.01-.364.03l.013-.002c-.248.524-.393 1.139-.393 1.788 0 .531.097 1.04.275 1.509l-.01-.029c-.785.844-1.266 1.979-1.266 3.227 0 .025 0 .051.001.076v-.004c-.001.039-.001.084-.001.13 0 .809.12 1.591.344 2.327l-.015-.057c.189.643.476 1.202.85 1.693l-.009-.013c.354.435.782.793 1.267 1.062l.022.011c.432.252.933.465 1.46.614l.046.011c.466.125 1.024.227 1.595.284l.046.004c-.431.428-.718 1-.784 1.638l-.001.012c-.207.101-.448.183-.699.236l-.021.004c-.256.051-.549.08-.85.08-.022 0-.044 0-.066 0h.003c-.394-.008-.756-.136-1.055-.348l.006.004c-.371-.259-.671-.595-.881-.986l-.007-.015c-.198-.336-.459-.614-.768-.827l-.009-.006c-.225-.169-.49-.301-.776-.38l-.016-.004-.32-.048c-.023-.002-.05-.003-.077-.003-.14 0-.273.028-.394.077l.007-.003q-.128.072-.08.184c.039.086.087.16.145.225l-.001-.001c.061.072.13.135.205.19l.003.002.112.08c.283.148.516.354.693.603l.004.006c.191.237.359.505.494.792l.01.024.16.368c.135.402.38.738.7.981l.005.004c.3.234.662.402 1.057.478l.016.002c.33.064.714.104 1.106.112h.007c.045.002.097.002.15.002.261 0 .517-.021.767-.062l-.027.004.368-.064q0 .609.008 1.418t.008.873v.014c0 .185-.08.351-.208.466h-.001c-.119.089-.268.143-.431.143-.075 0-.147-.011-.214-.032l.005.001c-4.929-1.689-8.409-6.283-8.409-11.69 0-2.268.612-4.393 1.681-6.219l-.032.058c1.094-1.871 2.609-3.386 4.422-4.449l.058-.031c1.739-1.034 3.835-1.645 6.073-1.645h.098-.005zm-7.64 17.666q.048-.112-.112-.192-.16-.048-.208.032-.048.112.112.192.144.096.208-.032zm.497.545q.112-.08-.032-.256-.16-.144-.256-.048-.112.08.032.256.159.157.256.047zm.48.72q.144-.112 0-.304-.128-.208-.272-.096-.144.08 0 .288t.272.112zm.672.673q.128-.128-.064-.304-.192-.192-.32-.048-.144.128.064.304.192.192.32.044zm.913.4q.048-.176-.208-.256-.24-.064-.304.112t.208.24q.24.097.304-.096zm1.009.08q0-.208-.272-.176-.256 0-.256.176 0 .208.272.176.256.001.256-.175zm.929-.16q-.032-.176-.288-.144-.256.048-.224.24t.288.128.225-.224z" />
+            </svg>
+          </a>
+        </div>
+        <p class="subtitle">粘贴正文与参考文献，按正文出现顺序重排引用编号</p>
+      </header>
+
+      <button class="config-btn" onclick="openSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+        配置
+      </button>
+    </div>
+
+    <section class="card" id="inputSection">
+      <div class="pane-grid">
+        <div class="pane">
+          <div class="pane-head">
+            <div class="pane-title">论文正文</div>
+            <div class="pane-meta" id="paperMeta">等待输入</div>
+          </div>
+          <textarea id="paperInput" placeholder="粘贴论文正文。支持 [1]、[1,2,3]、[2-5] 这类引用格式。" oninput="updateInputMeta()"></textarea>
+        </div>
+
+        <div class="pane">
+          <div class="pane-head">
+            <div class="pane-title">参考文献</div>
+            <div class="pane-meta" id="refsMeta">等待输入</div>
+          </div>
+          <textarea id="refsInput" placeholder="粘贴参考文献列表。开始处理后会先统一整理为 [1] 内容 这种格式。" oninput="updateInputMeta()"></textarea>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn-primary" id="startBtn" onclick="startSort()">开始排序</button>
+        <button class="btn-outline" type="button" onclick="fillDemo()">填入示例</button>
+        <p class="error-msg" id="inputError"></p>
+      </div>
+    </section>
+
+    <section class="card" id="progressSection" style="display:none">
+      <div class="progress-card">
+        <div class="progress-header">
+          <span class="progress-label" id="progressLabel">准备中</span>
+          <span class="progress-pct" id="progressPct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-detail" id="progressDetail">等待开始。</p>
+      </div>
+    </section>
+
+    <section class="card" id="resultSection" style="display:none">
+      <div class="result-header">
+        <div>
+          <h2>实时预览</h2>
+          <p class="summary-row" id="resultSummary">尚未开始处理。</p>
+        </div>
+        <div class="result-actions">
+          <button class="btn-outline" id="copyBodyBtn" onclick="copyBodyResult()">拷贝正文</button>
+          <button class="btn-outline" id="copyRefsBtn" onclick="copyRefsResult()">拷贝引用</button>
+          <button class="btn-outline" id="copyAllBtn" onclick="copyAllResult()">拷贝全部</button>
+          <button class="btn-outline" onclick="resetCheck()">重置</button>
+        </div>
+      </div>
+
+      <div class="result-grid">
+        <div class="preview-body">
+          <div class="pane-head">
+            <div class="pane-title">正文预览</div>
+            <div class="pane-meta" id="previewMeta">未生成</div>
+          </div>
+          <div class="preview-inner" id="previewBody">
+            <p class="empty-state">开始处理后，这里会实时显示重编号结果。</p>
+          </div>
+        </div>
+
+        <div class="preview-side">
+          <div class="pane-head">
+            <div class="pane-title">引用列表</div>
+            <div class="pane-meta" id="refsPreviewMeta">未生成</div>
+          </div>
+          <div class="ref-list" id="refsPreview">
+            <p class="empty-state">规范化后的参考文献和最终排序结果会显示在这里。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <div class="pane-head">
+          <div class="pane-title">处理日志</div>
+          <div class="pane-meta" id="activityMeta">0 条</div>
+        </div>
+        <div class="activity-list" id="activityList">
+          <p class="empty-state">还没有处理日志。</p>
+        </div>
+      </div>
+
+      <p class="star-hint">
+        <span class="star-hint-line"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>如果帮助到你可以<a href="https://afdian.com/a/jackielyu" target="_blank" rel="noopener noreferrer">请我喝蜜雪冰城</a></span>
+        <span class="star-hint-line"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>或者一个免费的 <a href="https://github.com/may3rr/Lishun" target="_blank" rel="noopener noreferrer">Star</a></span>
+      </p>
+    </section>
+  </div>
+
+  <script>
+    const onboardingSteps = [
+      {
+        messageHtml: 'AI 会出错。结果仅供参考。',
+        note: '',
+        button: '我知道了'
+      },
+      {
+        messageHtml: '建议你自己核对后，<br>再来做最终校对。',
+        note: '',
+        button: '我知道了'
+      },
+      {
+        messageHtml: '校对出来的不一定就是错的，<br>需要你再核对。',
+        note: '',
+        button: '我知道了，进入理顺'
+      }
+    ];
+
+    let onboardingStepIndex = 0;
+    let onboardingCleanupTimer = null;
+
+    let config = {
+      apiUrl: localStorage.getItem('citesorter_apiUrl') || 'https://api.deepseek.com/chat/completions',
+      model: localStorage.getItem('citesorter_model') || 'deepseek-chat',
+      apiKey: localStorage.getItem('citesorter_apiKey') || '',
+      lowConfidenceThreshold: 0.9
+    };
+
+    const state = createEmptyState();
+
+    function applyOnboardingContent() {
+      const current = onboardingSteps[onboardingStepIndex];
+      const noteEl = document.getElementById('onboardingNote');
+
+      document.getElementById('onboardingStep').textContent = `第 ${onboardingStepIndex + 1} 步，共 ${onboardingSteps.length} 步`;
+      document.getElementById('onboardingMessage').innerHTML = current.messageHtml;
+      document.getElementById('onboardingBtn').textContent = current.button;
+
+      if (current.note) {
+        noteEl.textContent = current.note;
+        noteEl.classList.remove('hidden');
+      } else {
+        noteEl.textContent = '';
+        noteEl.classList.add('hidden');
+      }
+
+      const dots = document.querySelectorAll('.onboarding-dot');
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === onboardingStepIndex);
+      });
+    }
+
+    function renderOnboarding() {
+      const overlay = document.getElementById('onboardingOverlay');
+      if (!overlay) return;
+
+      const copy = document.getElementById('onboardingCopy');
+      document.body.classList.add('onboarding-open');
+      overlay.classList.remove('hidden');
+
+      if (!copy.dataset.ready) {
+        applyOnboardingContent();
+        copy.dataset.ready = 'true';
+        return;
+      }
+
+      if (onboardingCleanupTimer) {
+        clearTimeout(onboardingCleanupTimer);
+        onboardingCleanupTimer = null;
+      }
+
+      const startHeight = copy.offsetHeight;
+      copy.style.height = `${startHeight}px`;
+      copy.classList.add('switching');
+      applyOnboardingContent();
+      const endHeight = copy.scrollHeight;
+
+      const cleanup = () => {
+        copy.classList.remove('switching');
+        copy.style.height = '';
+        copy.removeEventListener('transitionend', handleTransitionEnd);
+        if (onboardingCleanupTimer) {
+          clearTimeout(onboardingCleanupTimer);
+          onboardingCleanupTimer = null;
+        }
+      };
+
+      const handleTransitionEnd = (event) => {
+        if (event.propertyName !== 'height') return;
+        cleanup();
+      };
+
+      copy.addEventListener('transitionend', handleTransitionEnd);
+      onboardingCleanupTimer = window.setTimeout(cleanup, 520);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          copy.style.height = `${endHeight}px`;
+          if (Math.abs(endHeight - startHeight) < 1) {
+            window.setTimeout(cleanup, 220);
+          }
+        });
+      });
+    }
+
+    function closeOnboarding() {
+      document.body.classList.remove('onboarding-open');
+      document.getElementById('onboardingOverlay').classList.add('hidden');
+      document.getElementById('paperInput').focus();
+    }
+
+    function advanceOnboarding() {
+      if (onboardingStepIndex >= onboardingSteps.length - 1) {
+        closeOnboarding();
+        return;
+      }
+
+      onboardingStepIndex += 1;
+      renderOnboarding();
+    }
+
+    function createEmptyState() {
+      return {
+        originalBody: '',
+        originalRefsText: '',
+        normalizedRefsText: '',
+        references: [],
+        citationOccurrences: [],
+        uniqueOrder: [],
+        citationMap: {},
+        finalRefs: [],
+        processingLog: [],
+        lowConfidenceItems: [],
+        rewrittenBody: '',
+        completedCount: 0,
+        totalCount: 0,
+        isDone: false
+      };
+    }
+
+    const SYSTEM_PROMPTS = {
+      normalizeRefs: `你是中文论文参考文献整理助手。用户会提供一整段参考文献列表，请你将其重排为标准 XML 输出。
+
+规则：
+- 识别每一条独立参考文献
+- 保持原始顺序，不要改写文献信息内容
+- 输出格式必须是：<refs><ref id="1">第一条</ref>...</refs>
+- id 必须从 1 开始连续编号
+- 不要输出 XML 以外的任何文字`,
+
+      matchExisting: `你是论文引用匹配助手。请判断一个正文中的引用，是否与已排序列表中的某一篇参考文献相同。
+
+规则：
+- 只输出 JSON
+- confidence 取值 0 到 1
+    - 只有在你能判断“这是同一篇文献”时，才能返回 is_existing=true
+    - 同领域、同任务、同模型家族、相邻编号、主题相关，都不能视为同一篇文献
+    - 如果正文提到的论文名、模型名、作者信息与候选不一致，必须返回 is_existing=false
+    - 如果无法确定，就返回 is_existing=false，matched_new_id 必须为 null
+- 不要编造不存在的编号`,
+
+      matchRemaining: `你是论文引用匹配助手。请根据正文上下文，从候选参考文献中找出最可能被引用的一篇。
+
+规则：
+- 只输出 JSON
+- 必须从候选列表中选择 match_ref_id
+- confidence 取值 0 到 1
+- 若把握不大，也要返回当前最可能的一篇，并说明 reason`
+    };
+
+    function syncConfigInputs() {
+      document.getElementById('cfgApiUrl').value = config.apiUrl;
+      document.getElementById('cfgModel').value = config.model;
+      document.getElementById('cfgApiKey').value = config.apiKey;
+    }
+
+    function openSidebar() {
+      syncConfigInputs();
+      document.getElementById('sidebar').classList.add('open');
+      document.getElementById('sidebarOverlay').classList.add('active');
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('active');
+    }
+
+    function normalizeApiUrl(url) {
+      let normalized = (url || '').trim().replace(/\/+$/, '');
+      if (!normalized) return 'https://api.deepseek.com/chat/completions';
+      if (!normalized.endsWith('/chat/completions')) {
+        if (!normalized.endsWith('/v1')) normalized += '/v1';
+        normalized += '/chat/completions';
+      }
+      return normalized;
+    }
+
+    function autoSaveConfig() {
+      config.apiUrl = normalizeApiUrl(document.getElementById('cfgApiUrl').value);
+      config.model = document.getElementById('cfgModel').value.trim() || 'deepseek-chat';
+      config.apiKey = document.getElementById('cfgApiKey').value.trim();
+      config.lowConfidenceThreshold = 0.9;
+
+      localStorage.setItem('citesorter_apiUrl', config.apiUrl);
+      localStorage.setItem('citesorter_model', config.model);
+      localStorage.setItem('citesorter_apiKey', config.apiKey);
+      localStorage.removeItem('citesorter_threshold');
+    }
+
+    function copyConfigHint() {
+      const text = '你好！我是一个小白。我想使用你的 API 来运行一个已有的论文网页工具。请用最简单、按部就班的方式，教我如何获取 DeepSeek 的 API Key。请告诉我具体的点击路径。据我所知应该先去 https://platform.deepseek.com 开发者平台。';
+      navigator.clipboard.writeText(text).then(() => {
+        const flash = document.getElementById('copyFlash');
+        flash.classList.add('show');
+        setTimeout(() => flash.classList.remove('show'), 2500);
+      });
+    }
+
+    function updateInputMeta() {
+      const paperText = document.getElementById('paperInput').value.trim();
+      const refsText = document.getElementById('refsInput').value.trim();
+      const paperLines = paperText ? paperText.split(/\n/).length : 0;
+      const refsLines = refsText ? refsText.split(/\n/).length : 0;
+      document.getElementById('paperMeta').textContent = paperLines ? `${paperLines} 行` : '等待输入';
+      document.getElementById('refsMeta').textContent = refsLines ? `${refsLines} 行` : '等待输入';
+    }
+
+    function fillDemo() {
+      const paper = [
+        '近年来，多模态大模型在学术搜索与推荐任务中表现出明显优势[7]。',
+        '与此同时，针对长文本推理的分层检索方案也逐渐成熟[3,5]。',
+        '在医疗文本分析领域，知识增强检索框架已经成为主流方案之一[12-13]。',
+        '已有研究指出，评价指标的一致性会显著影响模型排序结果[5]。'
+      ].join('\n');
+
+      const refs = [
+        'Smith J. Hierarchical Retrieval for Long-Context Reasoning. ACL, 2023.',
+        'Wang L, Zhao P. Benchmarking ranking metrics in retrieval systems. SIGIR, 2022.',
+        'Lee H. Multimodal Foundation Models for Scholarly Search. Nature Machine Intelligence, 2024.',
+        'Chen Y. Knowledge-Augmented Retrieval for Clinical Notes. JAMIA, 2021.',
+        'Patel R. Medical Text Understanding with External Knowledge Graphs. EMNLP, 2022.'
+      ].join('\n');
+
+      document.getElementById('paperInput').value = paper;
+      document.getElementById('refsInput').value = refs;
+      updateInputMeta();
+    }
+
+    function showError(message) {
+      const error = document.getElementById('inputError');
+      error.textContent = message;
+      error.style.display = 'block';
+    }
+
+    function hideError() {
+      document.getElementById('inputError').style.display = 'none';
+    }
+
+    function setControlsDisabled(disabled) {
+      document.getElementById('paperInput').disabled = disabled;
+      document.getElementById('refsInput').disabled = disabled;
+      document.getElementById('startBtn').disabled = disabled;
+      document.getElementById('startBtn').textContent = disabled ? '处理中...' : '开始排序';
+    }
+
+    async function fetchWithRetry(url, options, retries = 2) {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 240)}`);
+          }
+          return await response.json();
+        } catch (error) {
+          if (attempt === retries) throw error;
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        }
+      }
+    }
+
+    function shouldForceTemperatureOne(error) {
+      const message = String(error && error.message || '').toLowerCase();
+      return message.includes('invalid temperature') && message.includes('only 1 is allowed');
+    }
+
+    async function callLLM(systemPrompt, userPrompt, options = {}) {
+      const temperature = options.temperature === undefined ? 1 : options.temperature;
+      const buildRequestOptions = (currentTemperature) => ({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: currentTemperature,
+          max_tokens: options.maxTokens || 4096
+        })
+      });
+
+      let data;
+      try {
+        data = await fetchWithRetry(config.apiUrl, buildRequestOptions(temperature));
+      } catch (error) {
+        if (!shouldForceTemperatureOne(error) || temperature === 1) throw error;
+        data = await fetchWithRetry(config.apiUrl, buildRequestOptions(1));
+      }
+
+      const content = data && data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : '';
+      if (!content) throw new Error('模型返回为空。');
+      return content;
+    }
+
+    function stripCodeFence(text) {
+      return (text || '').replace(/^```(?:json|xml)?\s*/i, '').replace(/```\s*$/i, '').trim();
+    }
+
+    function parseJSONObject(text) {
+      const cleaned = stripCodeFence(text);
+      const start = cleaned.indexOf('{');
+      const end = cleaned.lastIndexOf('}');
+      if (start === -1 || end === -1 || end < start) {
+        throw new Error('模型未返回有效 JSON。');
+      }
+      return JSON.parse(cleaned.slice(start, end + 1));
+    }
+
+    function normalizeBoolean(value) {
+      if (typeof value === 'boolean') return value;
+      if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        if (normalized === 'true') return true;
+        if (normalized === 'false') return false;
+      }
+      return null;
+    }
+
+    function isContradictoryExistingReason(reason) {
+      const text = String(reason || '').toLowerCase();
+      if (!text) return false;
+      return [
+        'is_existing=false',
+        '返回 is_existing=false',
+        '无法确定',
+        '不能确定',
+        '未出现',
+        '没有完全匹配',
+        '不完全匹配',
+        '并未出现',
+        'not the same paper',
+        'cannot determine',
+        'unable to determine'
+      ].some(keyword => text.includes(keyword));
+    }
+
+    function escapeXML(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function unescapeXML(str) {
+      return String(str)
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/&amp;/g, '&');
+    }
+
+    function parseRefsXML(text) {
+      const cleaned = stripCodeFence(text);
+      const refs = [];
+      try {
+        const wrapped = `<root>${cleaned}</root>`;
+        const doc = new DOMParser().parseFromString(wrapped, 'text/xml');
+        if (!doc.querySelector('parsererror')) {
+          doc.querySelectorAll('ref').forEach(el => {
+            const id = parseInt(el.getAttribute('id'), 10);
+            if (!Number.isNaN(id)) {
+              refs.push({ id, text: (el.textContent || '').trim() });
+            }
+          });
+        }
+      } catch (error) {}
+
+      if (refs.length) return refs;
+
+      const regex = /<ref\s+id=["']?(\d+)["']?\s*>([\s\S]*?)<\/ref>/g;
+      let match;
+      while ((match = regex.exec(cleaned)) !== null) {
+        refs.push({ id: parseInt(match[1], 10), text: unescapeXML(match[2].trim()) });
+      }
+      return refs;
+    }
+
+    async function normalizeReferences(rawText) {
+      const prompt = `请把下面的参考文献列表整理成 XML。每条参考文献一个 <ref> 标签，保留原始顺序，id 从 1 开始连续编号。\n\n参考文献原文：\n${rawText}\n\n只输出 XML：\n<refs>\n<ref id="1">...</ref>\n</refs>`;
+      const content = await callLLM(SYSTEM_PROMPTS.normalizeRefs, prompt, { maxTokens: 4096, temperature: 1 });
+      const refs = parseRefsXML(content);
+      if (!refs.length) {
+        throw new Error('参考文献规范化失败，模型没有返回可解析的 XML。');
+      }
+      return refs;
+    }
+
+    function splitRefTextIntoLines(text) {
+      return String(text)
+        .split(/\n+/)
+        .map(item => item.trim())
+        .filter(Boolean);
+    }
+
+    function normalizeRefsToText(refs) {
+      return refs.map(ref => `[${ref.id}] ${ref.text}`).join('\n');
+    }
+
+    function expandCitationContent(content) {
+      const parts = String(content).split(/[，,]/).map(part => part.trim()).filter(Boolean);
+      const numbers = [];
+      for (const part of parts) {
+        const rangeMatch = part.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+        if (rangeMatch) {
+          const start = parseInt(rangeMatch[1], 10);
+          const end = parseInt(rangeMatch[2], 10);
+          const step = start <= end ? 1 : -1;
+          for (let current = start; step > 0 ? current <= end : current >= end; current += step) {
+            numbers.push(current);
+          }
+          continue;
+        }
+        const single = parseInt(part, 10);
+        if (!Number.isNaN(single)) numbers.push(single);
+      }
+      return numbers;
+    }
+
+    function getCitationFormat(content) {
+      if (/[\-–]/.test(content)) return 'range';
+      if (/[，,]/.test(content)) return 'list';
+      return 'single';
+    }
+
+    function extractContext(text, start, end) {
+      const breakChars = '。！？；\n';
+      let left = start;
+      let right = end;
+
+      while (left > 0) {
+        if (breakChars.includes(text[left - 1])) break;
+        left--;
+      }
+      while (right < text.length) {
+        if (breakChars.includes(text[right])) {
+          right++;
+          break;
+        }
+        right++;
+      }
+
+      const context = text.slice(left, right).trim();
+      if (context) return context;
+      return text.slice(Math.max(0, start - 100), Math.min(text.length, end + 100)).trim();
+    }
+
+    function extractCitationData(text) {
+      const regex = /\[(\d+(?:\s*[-–,，]\s*\d+)*)\]/g;
+      const occurrences = [];
+      const uniqueOrder = [];
+      const seen = new Set();
+      let match;
+
+      while ((match = regex.exec(text)) !== null) {
+        const raw = match[0];
+        const content = match[1];
+        const numbers = expandCitationContent(content);
+        if (!numbers.length) continue;
+
+        occurrences.push({
+          raw,
+          content,
+          numbers,
+          format: getCitationFormat(content),
+          start: match.index,
+          end: match.index + raw.length,
+          context: extractContext(text, match.index, match.index + raw.length)
+        });
+
+        for (const number of numbers) {
+          if (!seen.has(number)) {
+            seen.add(number);
+            uniqueOrder.push(number);
+          }
+        }
+      }
+
+      return { occurrences, uniqueOrder };
+    }
+
+    function compressNumbers(numbers) {
+      if (!numbers.length) return '';
+      const sorted = [...new Set(numbers)].sort((a, b) => a - b);
+      const groups = [];
+      let start = sorted[0];
+      let previous = sorted[0];
+
+      for (let i = 1; i <= sorted.length; i++) {
+        const current = sorted[i];
+        if (current === previous + 1) {
+          previous = current;
+          continue;
+        }
+
+        if (start === previous) groups.push(String(start));
+        else groups.push(`${start}-${previous}`);
+
+        start = current;
+        previous = current;
+      }
+
+      return groups.join(',');
+    }
+
+    function rewriteCitationRaw(occurrence, citationMap, partial = false) {
+      const mappedNumbers = [];
+      for (const number of occurrence.numbers) {
+        if (citationMap[number] === undefined) {
+          if (partial) return occurrence.raw;
+          mappedNumbers.push(number);
+        } else {
+          mappedNumbers.push(citationMap[number]);
+        }
+      }
+      return `[${compressNumbers(mappedNumbers)}]`;
+    }
+
+    function buildRewrittenBody(text, occurrences, citationMap, partial = false) {
+      if (!occurrences.length) return text;
+      let cursor = 0;
+      let output = '';
+      for (const occurrence of occurrences) {
+        output += text.slice(cursor, occurrence.start);
+        output += rewriteCitationRaw(occurrence, citationMap, partial);
+        cursor = occurrence.end;
+      }
+      output += text.slice(cursor);
+      return output;
+    }
+
+    function computeDiff(a, b) {
+      if (a === b) return [{ type: 'equal', text: a }];
+      const aChars = [...a];
+      const bChars = [...b];
+      const m = aChars.length;
+      const n = bChars.length;
+      const dp = Array.from({ length: m + 1 }, () => new Uint16Array(n + 1));
+
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          dp[i][j] = aChars[i - 1] === bChars[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+
+      const ops = [];
+      let i = m;
+      let j = n;
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && aChars[i - 1] === bChars[j - 1]) {
+          ops.push({ type: 'equal', char: aChars[i - 1] });
+          i--;
+          j--;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+          ops.push({ type: 'insert', char: bChars[j - 1] });
+          j--;
+        } else {
+          ops.push({ type: 'delete', char: aChars[i - 1] });
+          i--;
+        }
+      }
+
+      ops.reverse();
+      const merged = [];
+      for (const op of ops) {
+        const last = merged[merged.length - 1];
+        if (last && last.type === op.type) last.text += op.char;
+        else merged.push({ type: op.type, text: op.char });
+      }
+      return merged;
+    }
+
+    function renderDiffLine(container, original, rewritten) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'preview-line';
+
+      if (!original && !rewritten) {
+        wrapper.innerHTML = '<br>';
+        container.appendChild(wrapper);
+        return;
+      }
+
+      if (original !== rewritten) wrapper.classList.add('line-changed');
+      const diff = computeDiff(original, rewritten);
+      for (const op of diff) {
+        const span = document.createElement('span');
+        span.textContent = op.text;
+        if (op.type === 'delete') span.className = 'diff-del';
+        if (op.type === 'insert') span.className = 'diff-ins';
+        wrapper.appendChild(span);
+      }
+      container.appendChild(wrapper);
+    }
+
+    function renderBodyPreview() {
+      const preview = document.getElementById('previewBody');
+      preview.innerHTML = '';
+      const rewritten = buildRewrittenBody(state.originalBody, state.citationOccurrences, state.citationMap, true);
+      state.rewrittenBody = rewritten;
+      document.getElementById('previewMeta').textContent = state.originalBody ? `${Object.keys(state.citationMap).length} / ${state.uniqueOrder.length} 个旧编号已映射` : '未生成';
+
+      if (!state.originalBody) {
+        preview.innerHTML = '<p class="empty-state">开始处理后，这里会实时显示重编号结果。</p>';
+        return;
+      }
+
+      const originalLines = state.originalBody.split('\n');
+      const rewrittenLines = rewritten.split('\n');
+      const total = Math.max(originalLines.length, rewrittenLines.length);
+
+      for (let i = 0; i < total; i++) {
+        renderDiffLine(preview, originalLines[i] || '', rewrittenLines[i] || '');
+      }
+    }
+
+    function renderRefsPreview() {
+      const preview = document.getElementById('refsPreview');
+      preview.innerHTML = '';
+      const matchedOldIds = new Set(state.finalRefs.map(ref => ref.oldId));
+      const unusedRefs = state.references.filter(ref => !matchedOldIds.has(ref.id));
+      document.getElementById('refsPreviewMeta').textContent = state.references.length ? `${state.finalRefs.length} 已排序 / ${unusedRefs.length} 未用到` : '未生成';
+
+      if (!state.references.length) {
+        preview.innerHTML = '<p class="empty-state">规范化后的参考文献和最终排序结果会显示在这里。</p>';
+        return;
+      }
+
+      for (const ref of state.finalRefs) {
+        const item = document.createElement('div');
+        item.className = 'ref-item';
+
+        const head = document.createElement('div');
+        head.className = 'ref-head';
+        head.innerHTML = `<span class="ref-label">[${ref.newId}]（原 [${ref.oldId}]）</span>`;
+
+        const badges = document.createElement('div');
+        if (ref.lowConfidence) {
+          const badge = document.createElement('span');
+          badge.className = 'badge warn';
+          badge.textContent = `低置信度 ${ref.confidence.toFixed(2)}`;
+          badges.appendChild(badge);
+        } else {
+          const badge = document.createElement('span');
+          badge.className = 'badge';
+          badge.textContent = `置信度 ${ref.confidence.toFixed(2)}`;
+          badges.appendChild(badge);
+        }
+        head.appendChild(badges);
+
+        const text = document.createElement('div');
+        text.className = 'ref-text';
+        text.textContent = ref.text;
+
+        item.appendChild(head);
+        item.appendChild(text);
+
+        if (ref.reason) {
+          const note = document.createElement('div');
+          note.className = ref.lowConfidence ? 'status-note' : 'log-desc';
+          note.textContent = ref.reason;
+          item.appendChild(note);
+        }
+
+        preview.appendChild(item);
+      }
+
+      for (const ref of unusedRefs) {
+        const item = document.createElement('div');
+        item.className = 'ref-item unused';
+        item.innerHTML = `<div class="ref-head"><span class="ref-label">[${ref.id}] 未引用</span><span class="badge">保留原顺序</span></div>`;
+        const text = document.createElement('div');
+        text.className = 'ref-text';
+        text.textContent = ref.text;
+        item.appendChild(text);
+        preview.appendChild(item);
+      }
+    }
+
+    function renderActivityLog() {
+      const list = document.getElementById('activityList');
+      document.getElementById('activityMeta').textContent = `${state.processingLog.length} 条`;
+      if (!state.processingLog.length) {
+        list.innerHTML = '<p class="empty-state">还没有处理日志。</p>';
+        return;
+      }
+
+      list.innerHTML = '';
+      for (const item of state.processingLog) {
+        const entry = document.createElement('div');
+        entry.className = 'log-item';
+        entry.innerHTML = `<div class="log-title">${item.title}</div><div class="log-desc">${item.description}</div>`;
+        list.appendChild(entry);
+      }
+    }
+
+    function renderSummary() {
+      const mapped = Object.keys(state.citationMap).length;
+      const refsUsed = state.finalRefs.length;
+      const lowConfidence = state.finalRefs.filter(ref => ref.lowConfidence).length;
+      const summary = state.isDone
+        ? `处理完成：共识别 ${state.citationOccurrences.length} 处引用出现，映射 ${mapped} 个旧编号，生成 ${refsUsed} 条排序结果${lowConfidence ? `，其中 ${lowConfidence} 条需要复核` : ''}。`
+        : `处理中：共识别 ${state.citationOccurrences.length} 处引用出现，当前已映射 ${mapped} / ${state.uniqueOrder.length} 个旧编号。`;
+      document.getElementById('resultSummary').textContent = summary;
+    }
+
+    function renderAll() {
+      document.getElementById('resultSection').style.display = '';
+      renderBodyPreview();
+      renderRefsPreview();
+      renderActivityLog();
+      renderSummary();
+    }
+
+    function pushLog(title, description) {
+      state.processingLog.unshift({ title, description });
+      if (state.processingLog.length > 14) state.processingLog.length = 14;
+      renderActivityLog();
+    }
+
+    function updateProgress(label, detail, current, total) {
+      const pct = total ? Math.round((current / total) * 100) : 0;
+      document.getElementById('progressLabel').textContent = label;
+      document.getElementById('progressDetail').textContent = detail;
+      document.getElementById('progressPct').textContent = `${pct}%`;
+      document.getElementById('progressFill').style.width = `${pct}%`;
+    }
+
+    function classifyRequestError(error) {
+      const message = error && error.message ? error.message : '';
+      if (message.includes('401')) return 'API Key 无效或已过期，请在右上角配置中更新。';
+      if (message.includes('402') || message.toLowerCase().includes('insufficient')) return '账户余额不足，请先充值后再试。';
+      if (message.includes('429')) return '请求过于频繁，请稍后再试。';
+      return `请求失败：${message.slice(0, 120)}`;
+    }
+
+    function resetRuntimeState() {
+      const empty = createEmptyState();
+      Object.keys(empty).forEach(key => {
+        state[key] = empty[key];
+      });
+    }
+
+    function getCitationContexts(oldNumber) {
+      return state.citationOccurrences
+        .filter(item => item.numbers.includes(oldNumber))
+        .slice(0, 3)
+        .map(item => item.context);
+    }
+
+    async function detectExistingMatch(oldNumber) {
+      if (!state.finalRefs.length) return null;
+      const contexts = getCitationContexts(oldNumber);
+      const prompt = `请判断正文里的旧编号 [${oldNumber}] 是否与下列已排序参考文献中的某一篇相同。\n\n正文上下文：\n${contexts.map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\n已排序参考文献：\n${state.finalRefs.map(ref => `[新${ref.newId} / 原${ref.oldId}] ${ref.text}`).join('\n')}\n\n只输出 JSON：\n{"is_existing":true,"matched_new_id":1,"confidence":0.92,"reason":"..."}`;
+      const content = await callLLM(SYSTEM_PROMPTS.matchExisting, prompt, { maxTokens: 1200, temperature: 1 });
+      const result = parseJSONObject(content);
+      const isExisting = normalizeBoolean(result && result.is_existing);
+      if (!result || isExisting !== true) return null;
+
+      const matchedNewId = parseInt(result.matched_new_id, 10);
+      if (Number.isNaN(matchedNewId)) return null;
+
+      const matchedRef = state.finalRefs.find(ref => ref.newId === matchedNewId);
+      if (!matchedRef) return null;
+
+      const confidence = Number(result.confidence || 0);
+      const reason = String(result.reason || '');
+      if (isContradictoryExistingReason(reason)) return null;
+
+      return {
+        isExisting: true,
+        matchedNewId,
+        confidence,
+        reason
+      };
+    }
+
+    async function detectRemainingMatch(oldNumber) {
+      const usedOldIds = new Set(state.finalRefs.map(ref => ref.oldId));
+      const remainingRefs = state.references.filter(ref => !usedOldIds.has(ref.id));
+      if (!remainingRefs.length) throw new Error('没有剩余候选参考文献可以匹配。');
+
+      const contexts = getCitationContexts(oldNumber);
+      const prompt = `请根据正文上下文，从候选参考文献中找出旧编号 [${oldNumber}] 最可能对应的一篇。\n\n正文上下文：\n${contexts.map((item, index) => `${index + 1}. ${item}`).join('\n')}\n\n候选参考文献：\n${remainingRefs.map(ref => `[${ref.id}] ${ref.text}`).join('\n')}\n\n只输出 JSON：\n{"match_ref_id":2,"confidence":0.81,"reason":"..."}`;
+      const content = await callLLM(SYSTEM_PROMPTS.matchRemaining, prompt, { maxTokens: 1600, temperature:  1 });
+      const result = parseJSONObject(content);
+      const matchRefId = parseInt(result.match_ref_id, 10);
+      if (Number.isNaN(matchRefId)) throw new Error('模型没有返回有效的候选编号。');
+      const matchedRef = remainingRefs.find(ref => ref.id === matchRefId);
+      if (!matchedRef) throw new Error('模型返回了候选列表之外的编号。');
+
+      return {
+        ref: matchedRef,
+        confidence: Number(result.confidence || 0),
+        reason: String(result.reason || '')
+      };
+    }
+
+    async function resolveCitation(oldNumber) {
+      if (state.citationMap[oldNumber] !== undefined) return;
+
+      const existing = await detectExistingMatch(oldNumber);
+      if (existing && existing.isExisting && existing.confidence >= 0.8) {
+        state.citationMap[oldNumber] = existing.matchedNewId;
+        pushLog(`复用已排序结果 [${oldNumber}] → [${existing.matchedNewId}]`, existing.reason || `模型判断旧编号 [${oldNumber}] 与已有排序中的第 ${existing.matchedNewId} 条相同。`);
+        return;
+      }
+
+      const matched = await detectRemainingMatch(oldNumber);
+      const nextId = state.finalRefs.length + 1;
+      state.citationMap[oldNumber] = nextId;
+
+      const lowConfidence = matched.confidence < config.lowConfidenceThreshold;
+      const finalRef = {
+        newId: nextId,
+        oldId: matched.ref.id,
+        text: matched.ref.text,
+        confidence: matched.confidence,
+        reason: matched.reason,
+        lowConfidence
+      };
+      state.finalRefs.push(finalRef);
+      if (lowConfidence) state.lowConfidenceItems.push(finalRef);
+
+      pushLog(
+        `新增排序结果 [${oldNumber}] → [${nextId}]`,
+        `${matched.reason || '已完成匹配。'} 选中原参考文献 [${matched.ref.id}]，置信度 ${matched.confidence.toFixed(2)}。`
+      );
+    }
+
+    async function startSort() {
+      hideError();
+      autoSaveConfig();
+
+      if (!config.apiKey) {
+        showError('请先点击右上角「配置」填写 API Key。');
+        return;
+      }
+
+      const bodyText = document.getElementById('paperInput').value.trim();
+      const refsText = document.getElementById('refsInput').value.trim();
+      if (!bodyText) {
+        showError('需要提供论文正文。');
+        return;
+      }
+      if (!refsText) {
+        showError('需要提供参考文献列表。');
+        return;
+      }
+
+      resetRuntimeState();
+      state.originalBody = bodyText;
+      state.originalRefsText = refsText;
+      document.getElementById('progressSection').style.display = '';
+      document.getElementById('resultSection').style.display = '';
+      setControlsDisabled(true);
+      renderAll();
+
+      try {
+        updateProgress('整理参考文献', '正在把右侧参考文献统一成标准编号格式。', 1, 4);
+        const normalizedRefs = await normalizeReferences(refsText);
+        state.references = normalizedRefs;
+        state.normalizedRefsText = normalizeRefsToText(normalizedRefs);
+        pushLog('参考文献已规范化', `共识别 ${normalizedRefs.length} 条参考文献，并统一整理为 [N] 文本 的格式。`);
+        renderAll();
+
+        updateProgress('提取正文引用', '正在扫描正文中的所有引用标号。', 2, 4);
+        const citationData = extractCitationData(bodyText);
+        state.citationOccurrences = citationData.occurrences;
+        state.uniqueOrder = citationData.uniqueOrder;
+        state.totalCount = state.uniqueOrder.length;
+
+        if (!state.citationOccurrences.length) {
+          throw new Error('正文中没有识别到 [1]、[2-5]、[1,2,3] 这类引用标号。');
+        }
+
+        pushLog('正文引用已提取', `共找到 ${state.citationOccurrences.length} 处引用出现，涉及 ${state.uniqueOrder.length} 个旧编号。`);
+        renderAll();
+
+        for (let index = 0; index < state.uniqueOrder.length; index++) {
+          const oldNumber = state.uniqueOrder[index];
+          updateProgress(
+            `匹配正文引用 [${oldNumber}]`,
+            `正在处理第 ${index + 1} / ${state.uniqueOrder.length} 个旧编号。每处理完一个编号都会即时刷新预览。`,
+            2 + (index + 1) / Math.max(1, state.uniqueOrder.length),
+            4
+          );
+          await resolveCitation(oldNumber);
+          state.completedCount = index + 1;
+          renderAll();
+        }
+
+        state.rewrittenBody = buildRewrittenBody(state.originalBody, state.citationOccurrences, state.citationMap, false);
+        state.isDone = true;
+        renderAll();
+        updateProgress('处理完成', `已完成 ${state.uniqueOrder.length} 个旧编号的重排。`, 4, 4);
+      } catch (error) {
+        showError(classifyRequestError(error));
+      } finally {
+        setControlsDisabled(false);
+      }
+    }
+
+    function getFinalBodyText() {
+      if (!state.originalBody) return '';
+      if (state.isDone) return state.rewrittenBody;
+      return buildRewrittenBody(state.originalBody, state.citationOccurrences, state.citationMap, true);
+    }
+
+    function getFinalRefsText() {
+      if (!state.references.length) return '';
+      const lines = [];
+      for (const ref of state.finalRefs) {
+        lines.push(`[${ref.newId}] ${ref.text}`);
+      }
+      const used = new Set(state.finalRefs.map(ref => ref.oldId));
+      for (const ref of state.references) {
+        if (!used.has(ref.id)) lines.push(`[未引用 / 原 ${ref.id}] ${ref.text}`);
+      }
+      return lines.join('\n');
+    }
+
+    function flashButton(buttonId, text) {
+      const button = document.getElementById(buttonId);
+      const original = button.textContent;
+      button.textContent = text;
+      setTimeout(() => {
+        button.textContent = original;
+      }, 1800);
+    }
+
+    function copyBodyResult() {
+      const text = getFinalBodyText();
+      if (!text) return showError('还没有可拷贝的正文结果。');
+      navigator.clipboard.writeText(text).then(() => flashButton('copyBodyBtn', '已拷贝'));
+    }
+
+    function copyRefsResult() {
+      const text = getFinalRefsText();
+      if (!text) return showError('还没有可拷贝的引用结果。');
+      navigator.clipboard.writeText(text).then(() => flashButton('copyRefsBtn', '已拷贝'));
+    }
+
+    function copyAllResult() {
+      const body = getFinalBodyText();
+      const refs = getFinalRefsText();
+      if (!body && !refs) return showError('还没有可拷贝的结果。');
+      const merged = `【正文】\n${body}\n\n【参考文献】\n${refs}`;
+      navigator.clipboard.writeText(merged).then(() => flashButton('copyAllBtn', '已拷贝'));
+    }
+
+    function resetCheck() {
+      resetRuntimeState();
+      document.getElementById('progressSection').style.display = 'none';
+      document.getElementById('resultSection').style.display = 'none';
+      hideError();
+      updateInputMeta();
+      document.getElementById('paperInput').focus();
+    }
+
+    syncConfigInputs();
+    updateInputMeta();
+    renderOnboarding();
+  </script>
+</body>
+</html>
